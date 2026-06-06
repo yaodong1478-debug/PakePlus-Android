@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#3b82f6" />
   <title>随手记·日常小账本</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
   <div class="app">
@@ -42,6 +42,14 @@
     </header>
 
     <main class="main">
+      <div class="household-view-bar family-ledger-ui" id="householdViewBar">
+        <div class="household-view-tabs" role="tablist" aria-label="家庭账本视角">
+          <button type="button" class="household-view-tab is-active" data-view="family" role="tab" aria-selected="true">🏡 总账</button>
+          <button type="button" class="household-view-tab" data-view="male" role="tab" aria-selected="false">🎩 先生</button>
+          <button type="button" class="household-view-tab" data-view="female" role="tab" aria-selected="false">💄 夫人</button>
+        </div>
+      </div>
+
       <!-- 【明细页】看板 + 记一笔 + 历史明细 -->
       <div class="page-panel is-active" id="pageDetail" role="tabpanel" aria-labelledby="tabDetail">
         <section class="dashboard" aria-label="数据看板">
@@ -108,32 +116,105 @@
         </section>
 
         <section class="history-section">
-          <div class="history-header">
-            <h2 class="section-title">历史账目明细</h2>
-            <div class="history-meta">
-              <span class="record-count" id="recordCount">共 0 笔</span>
-              <span class="record-sum" id="recordSum">累计金额：¥0.00</span>
+          <h2 class="section-title history-section__title">历史账目明细</h2>
+
+          <div class="history-filters" role="group" aria-label="历史账单筛选">
+            <div class="history-filter">
+              <label for="historyFilter" class="history-filter__label">类型</label>
+              <select id="historyFilter" class="history-filter__select" aria-label="按分类筛选历史账单">
+                <option value="all">📋 全部</option>
+              </select>
+            </div>
+            <div class="history-filter">
+              <label for="yearFilter" class="history-filter__label">年份</label>
+              <select id="yearFilter" class="history-filter__select" aria-label="按年份筛选历史账单">
+                <option value="all">全部</option>
+              </select>
+            </div>
+            <div class="history-filter">
+              <label for="monthFilter" class="history-filter__label">月份</label>
+              <select id="monthFilter" class="history-filter__select" aria-label="按月份筛选历史账单">
+                <option value="all">全部</option>
+              </select>
             </div>
           </div>
 
-          <div class="history-filters">
-            <div class="history-filter">
-              <label for="historyFilter" class="history-filter__label">类型筛选</label>
-              <select id="historyFilter" class="history-filter__select" aria-label="按分类筛选历史账单">
-                <option value="all">📋 全部类型</option>
-              </select>
+          <div class="history-summary">
+            <span class="record-count" id="recordCount">共 0 笔</span>
+            <button
+              type="button"
+              class="btn-backup-toggle"
+              id="backupToggleBtn"
+              aria-expanded="false"
+              aria-controls="backupPanel"
+            >⚙️ 数据备份</button>
+            <span class="record-sum" id="recordSum">累计金额：¥0.00</span>
+          </div>
+
+          <div class="backup-panel" id="backupPanel" aria-hidden="true">
+            <label class="family-ledger-switch" for="familyLedgerToggle">
+              <input type="checkbox" id="familyLedgerToggle" />
+              <span class="family-ledger-switch__slider" aria-hidden="true"></span>
+              <span class="family-ledger-switch__text">启用家庭账本</span>
+            </label>
+
+            <div class="backup-panel__toolbar">
+              <button type="button" class="btn-backup btn-backup--export" id="exportBackupBtn">📤 导出备份</button>
+              <button type="button" class="btn-backup btn-backup--import" id="importBackupBtn">📥 导入账单</button>
+              <button type="button" class="btn-backup btn-backup--danger" id="clearAllDataBtn">🗑️ 清空所有数据</button>
             </div>
-            <div class="history-filter">
-              <label for="yearFilter" class="history-filter__label">年份筛选</label>
-              <select id="yearFilter" class="history-filter__select" aria-label="按年份筛选历史账单">
-                <option value="all">全部年份</option>
-              </select>
+            <div class="backup-panel__snapshot">
+              <button type="button" class="btn-snapshot" id="restoreSnapshotBtn" disabled>↩️ 恢复上一次操作（快照）</button>
             </div>
-            <div class="history-filter">
-              <label for="monthFilter" class="history-filter__label">月份筛选</label>
-              <select id="monthFilter" class="history-filter__select" aria-label="按月份筛选历史账单">
-                <option value="all">全部月份</option>
-              </select>
+
+            <div class="backup-panel__webdav family-ledger-ui" id="webdavSection">
+              <h4 class="backup-panel__subtitle">☁️ 飞牛云同步配置</h4>
+              <div class="webdav-form">
+                <div class="webdav-field">
+                  <label for="webdavUrl" class="webdav-field__label">WebDAV 地址</label>
+                  <input type="url" id="webdavUrl" class="webdav-field__input" placeholder="https://fnos.net/你的ID/proxy/5006/FamilyLedger/" autocomplete="off" />
+                </div>
+                <div class="webdav-field-row">
+                  <div class="webdav-field">
+                    <label for="webdavUser" class="webdav-field__label">飞牛用户名</label>
+                    <input type="text" id="webdavUser" class="webdav-field__input" placeholder="用户名" autocomplete="username" />
+                  </div>
+                  <div class="webdav-field">
+                    <label for="webdavPass" class="webdav-field__label">飞牛密码</label>
+                    <input type="password" id="webdavPass" class="webdav-field__input" placeholder="密码" autocomplete="current-password" />
+                  </div>
+                </div>
+                <div class="webdav-field">
+                  <label for="deviceCreator" class="webdav-field__label">本机身份绑定</label>
+                  <select id="deviceCreator" class="webdav-field__select" aria-label="本机默认记账身份">
+                    <option value="male">♂️ 男方（本手机）</option>
+                    <option value="female">♀️ 女方（本手机）</option>
+                  </select>
+                </div>
+                <div class="webdav-actions">
+                  <button type="button" class="btn-backup btn-backup--sync" id="manualSyncBtn">🔄 立即手动同步</button>
+                  <label class="webdav-auto-sync">
+                    <input type="checkbox" id="autoSyncToggle" checked />
+                    <span>开启自动同步</span>
+                  </label>
+                </div>
+                <p class="webdav-status" id="webdavStatus" aria-live="polite">同步状态：未配置</p>
+              </div>
+            </div>
+
+            <div class="backup-panel__import" id="backupImportArea" hidden>
+              <label for="importTextarea" class="backup-panel__label">粘贴备份数据（JSON）</label>
+              <textarea
+                id="importTextarea"
+                class="backup-panel__textarea"
+                rows="4"
+                placeholder="将「导出备份」复制的文本完整粘贴到此处…"
+                spellcheck="false"
+              ></textarea>
+              <div class="backup-panel__import-actions">
+                <button type="button" class="btn-backup btn-backup--cancel" id="importCancelBtn">取消</button>
+                <button type="button" class="btn-backup btn-backup--confirm" id="importConfirmBtn">确认导入</button>
+              </div>
             </div>
           </div>
 
@@ -147,13 +228,33 @@
       <div class="page-panel" id="pageCharts" role="tabpanel" aria-labelledby="tabCharts" hidden>
         <section class="stats-section stats-section--page">
           <h2 class="section-title stats-page-title">看我把钱花哪了</h2>
-          <p class="stats-desc">支出分类占比（已报销的公务支出不计入）</p>
 
           <div class="period-tabs" role="tablist" aria-label="饼图统计周期">
             <button type="button" class="period-tab is-active" data-period="week">按周查看</button>
             <button type="button" class="period-tab" data-period="month">按月查看</button>
             <button type="button" class="period-tab" data-period="quarter">按季度查看</button>
             <button type="button" class="period-tab" data-period="year">按年度查看</button>
+          </div>
+
+          <div class="pie-sub-filter-container" id="pieSubFilterContainer">
+            <div class="pie-sub-filter-row">
+              <div class="pie-sub-filter">
+                <label for="pieYearSelect" class="pie-sub-filter__label">年份</label>
+                <select id="pieYearSelect" class="pie-sub-filter__select" aria-label="饼图统计年份"></select>
+              </div>
+              <div class="pie-sub-filter" id="pieWeekFilterWrap">
+                <label for="pieWeekSelect" class="pie-sub-filter__label">周次</label>
+                <select id="pieWeekSelect" class="pie-sub-filter__select" aria-label="饼图统计周次"></select>
+              </div>
+              <div class="pie-sub-filter" id="pieMonthFilterWrap" hidden>
+                <label for="pieMonthSelect" class="pie-sub-filter__label">月份</label>
+                <select id="pieMonthSelect" class="pie-sub-filter__select" aria-label="饼图统计月份"></select>
+              </div>
+              <div class="pie-sub-filter" id="pieQuarterFilterWrap" hidden>
+                <label for="pieQuarterSelect" class="pie-sub-filter__label">季度</label>
+                <select id="pieQuarterSelect" class="pie-sub-filter__select" aria-label="饼图统计季度"></select>
+              </div>
+            </div>
           </div>
 
           <div class="chart-wrap chart-wrap--pie">
@@ -166,7 +267,7 @@
             <div class="trend-tabs" role="tablist" aria-label="走势图周期">
               <button type="button" class="trend-tab is-active" data-trend="week">周（近7天）</button>
               <button type="button" class="trend-tab" data-trend="month">月（近30天）</button>
-              <button type="button" class="trend-tab" data-trend="year">年（近12月）</button>
+              <button type="button" class="trend-tab" data-trend="year">年（1-12月）</button>
             </div>
             <div class="chart-wrap chart-wrap--line">
               <canvas id="trendChart" aria-label="收入支出折线图"></canvas>
@@ -189,6 +290,21 @@
       <span class="bottom-nav__label">数据图表</span>
     </button>
   </nav>
+
+  <!-- 导出备份：剪贴板不可用时的手动复制弹窗 -->
+  <div class="modal-overlay" id="exportFallbackModal" hidden>
+    <div class="modal modal--export" role="dialog" aria-labelledby="exportFallbackTitle" aria-modal="true">
+      <div class="modal__header">
+        <h3 class="modal__title" id="exportFallbackTitle">手动复制备份</h3>
+        <button type="button" class="modal__close" id="exportFallbackClose" aria-label="关闭">×</button>
+      </div>
+      <p class="export-fallback__tip">当前设备无法自动写入剪贴板，请全选下方文本并复制保存。</p>
+      <textarea id="exportFallbackText" class="export-fallback__textarea" readonly rows="8"></textarea>
+      <div class="modal__actions">
+        <button type="button" class="btn-modal-save" id="exportFallbackOk">我知道了</button>
+      </div>
+    </div>
+  </div>
 
   <!-- 编辑账单弹窗 -->
   <div class="modal-overlay" id="editModal" hidden>
